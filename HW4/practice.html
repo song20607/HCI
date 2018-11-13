@@ -1,0 +1,386 @@
+<!doctype html>
+<html>
+<head>
+  <title>HW4</title>
+  <meta charset="utf-8">
+</head>
+<body>
+  <h1><a href="https://song20607.github.io/HCI/">Home</a></h1>
+  <h5> Try to select the corner carefully</h5>
+  <h5> After make it, you can resize by dragging the corner of window</h5>
+
+
+ <input type="textbox" id= "object" class="window_btn" placeholder=""> <p></p>
+<input type="textbox" id="Position_x" class="window" placeholder="Position_x">
+<input type="textbox" id="Position_y" class="window" placeholder="Position_y"> 
+<input type="textbox" id="width" class="window" placeholder="Width">
+<input type="textbox" id="height" class="window" placeholder="Height">
+<input type="textbox" id="title" class="window" placeholder="Title"> 
+<button id = "window_btn" class="window" > make </button>
+</div>
+
+<canvas id="canvas" height="1000" width="1000">window</canvas>
+<!--<canvas id ="canvas2" height = "500" width = "500"> Button</canvas>-->
+ 
+</body>
+<script type="text/javascript">
+
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext("2d"),
+      rect_list = [],
+      rect = {},
+      rect_temp={},
+      button_temp={},
+       mouseX, 
+        mouseY,
+        closeEnough = 10,
+        dragTL=dragBL=dragTR=dragBR=false;
+
+
+    //var canvas2 = document.getElementById('canvas2');
+    //var context2 = canvas2.getContext("2d"),
+        var button={},
+        //drag2 = false,
+        mouseX2, 
+        mouseY2,
+        dragTL2=dragBL2=dragTR2=dragBR2=false;
+
+    /*button = {
+        startX2: 50,
+        startY2: 50,
+        w2: 100,
+        h2: 50
+    };*/
+
+
+    shapes = []
+
+
+    function create_window(ID,startX,startY,w,h,title) {
+
+      var win = {
+      };
+      win.ID =ID;
+      win.startX =startX;
+      win.startY =startY;
+      win.w=w;
+      win.h=h;
+      win.title=title;
+
+      context.beginPath(); //start drawing line
+      context.font="15px Verdana";
+
+      context.rect(startX,startY,w,30);
+      context.fillRect(startX, startY+30, w, h);
+      context.fillText(title,startX+60,startY+20,100);
+      context.rect(startX+30,startY+5,20,20) ;
+      context.rect(startX+5,startY+5,20,20);
+      context.fillText("X",startX+35,startY+20,100); 
+      context.fillText("ㅡ",startX+8,startY+20,100);
+
+       
+      context.stroke(); //drawing
+      context.closePath();//match end of the line with the start 
+
+    return win;
+  
+ 
+    }
+
+    function create_button(ID, startX2,startY2,w2,h2,title) {
+
+       var win = {};
+      win.ID = ID;
+      win.startX2 =startX2;
+      win.startY2 =startY2,
+      win.w2=w2;
+      win.h2=h2;
+      win.title=title;
+
+      context.beginPath(); //start drawing line
+      context.font="15px Verdana";
+
+      context.rect(startX2, startY2, w2, h2);
+      context.fillText(title,startX2,startY2+20,100);
+      
+       
+      context.stroke(); //drawing
+      context.closePath();//match end of the line with the start point
+
+      return win;
+    }
+ 
+  function create(){
+    if(document.getElementById("object").value == "window")
+    {
+        rect = create_window(
+        document.getElementById("object").value,
+        +document.getElementById("Position_x").value,
+        +document.getElementById("Position_y").value,
+        +document.getElementById("width").value,
+        +document.getElementById("height").value,
+        document.getElementById("title").value
+        );
+        shapes.push(rect)
+     // return rect;
+
+   }
+     else if(document.getElementById("object").value == "button")
+     {
+       button = create_button(
+        document.getElementById("object").value,
+        +document.getElementById("Position_x").value,
+        +document.getElementById("Position_y").value,
+        +document.getElementById("width").value,
+        +document.getElementById("height").value,
+        document.getElementById("title").value
+        )
+
+       shapes.push(button);
+     }
+
+     else {
+     }
+
+    }    
+
+    
+
+
+  function init() {
+    canvas.addEventListener('mousedown', mouseDown,false);
+    canvas.addEventListener('mouseup', mouseUp, false );
+    canvas.addEventListener('mousemove', mouseMove, false);
+   
+  
+      
+    // body...
+  }
+
+  function init2(){
+    canvas.addEventListener('mousedown', mouseDown2,false);
+    canvas.addEventListener('mousemove', mouseMove2, false);
+    canvas.addEventListener('mouseup', mouseUp, false );
+    
+  }
+
+  function mouseDown(e){
+      mouseX = e.pageX - this.offsetLeft;
+      mouseY = e.pageY - this.offsetTop;
+
+      
+      /*if(rect.w === undefined){
+        rect.startX = mouseY;
+        rect.startY = mouseX;
+        dragBR = true;
+    }
+
+    else*/
+
+  for(shape of shapes){
+        if (shape.ID =="window"){
+          console.log(mouseY+', '+(shape.startY+shape.h));
+          if( checkCloseEnough(mouseX, shape.startX) && checkCloseEnough(mouseY, shape.startY) ){
+            rect = shape;
+            dragTL = true;
+            break;
+          }
+          // 2. top right
+          else if( checkCloseEnough(mouseX, shape.startX+shape.w) && checkCloseEnough(mouseY, shape.startY) ){
+            rect = shape;
+            dragTR = true;
+            break;
+          }
+          // 3. bottom left
+          else if( checkCloseEnough(mouseX, shape.startX) && checkCloseEnough(mouseY, shape.startY+shape.h+32) ){
+            rect = shape;
+            dragBL = true;
+            break;
+          }
+          // 4. bottom right
+          else if( checkCloseEnough(mouseX, shape.startX+shape.w) && checkCloseEnough(mouseY, shape.startY+shape.h+32) ){
+            rect = shape;
+            dragBR = true;
+            break;
+          }
+          // (5.) none of them
+          else {
+            // handle not resizing
+          }
+        }
+      }
+      console.log('mousedown : '+dragBR)
+    }
+
+
+      
+    
+
+   function mouseDown2(e){
+      mouseX2 = e.pageX - this.offsetLeft;
+      mouseY2 = e.pageY - this.offsetTop;
+      for(shape of shapes){
+        if (shape.ID =="button"){
+          if( checkCloseEnough(mouseX2, shape.startX2) && checkCloseEnough(mouseY2, shape.startY2) ){
+            button = shape;
+            dragTL2 = true;
+            break;
+          }
+          // 2. top right
+          else if( checkCloseEnough(mouseX2, shape.startX2+shape.w2) && checkCloseEnough(mouseY2, shape.startY2) ){
+            button = shape;
+            dragTR2 = true;
+            break;
+          }
+          // 3. bottom left
+          else if( checkCloseEnough(mouseX2, shape.startX2) && checkCloseEnough(mouseY2, shape.startY2+shape.h2) ){
+            button = shape;
+            dragBL2 = true;
+            break;
+          }
+          // 4. bottom right
+          else if( checkCloseEnough(mouseX2, shape.startX2+shape.w2) && checkCloseEnough(mouseY2, shape.startY2+shape.h2) ){
+            button = shape;
+            dragBR2 = true;
+            break;
+          }
+          // (5.) none of them
+          else {
+            // handle not resizing
+          }
+        }
+      }
+
+        /*if (button.w2=== undefined){
+        button.startX2 = mouseY2;
+        button.startY2 = mouseX2;
+        dragBR2 = true;
+    }
+
+    else */
+
+      //context.clearRect(0,0,canvas.width,canvas.height);
+       //context.clearRect(button.startX2, button.startY2, button.w2, button.h2)
+      
+      //create_button(button.ID,button.startX2, button.startY2,button.w2,button.h2,button.title);
+    
+    };
+
+     
+
+    
+
+  
+
+
+    function checkCloseEnough(p1, p2){
+      return Math.abs(p1-p2)<closeEnough;
+    }
+    function mouseUp() {
+      dragTL = dragTR = dragBL = dragBR = false;
+      dragTL2 = dragTR2 = dragBL2 = dragBR2 = false;
+    }
+
+    function mouseMove(e) {
+      mouseX = e.pageX - this.offsetLeft;
+      mouseY = e.pageY - this.offsetTop;
+      if(dragTL){
+        rect.w += rect.startX-mouseX;
+        rect.h += rect.startY-mouseY;
+        rect.startX = mouseX;
+        rect.startY = mouseY;
+      } else if(dragTR) {
+        rect.w = Math.abs(rect.startX-mouseX);
+        rect.h += rect.startY-mouseY;
+        rect.startY = mouseY;
+      } else if(dragBL) {
+        rect.w += rect.startX-mouseX;
+        rect.h = Math.abs(rect.startY-mouseY);
+        rect.startX = mouseX;  
+      } else if(dragBR) {
+        rect.w = Math.abs(rect.startX-mouseX);
+        rect.h = Math.abs(rect.startY-mouseY);
+      }
+      console.log(rect.w + ', ' + rect.h)
+        // context.clearRect(0,0,canvas.width,canvas.height);
+        drawAll();
+        // create_window(rect.ID, rect.startX, rect.startY,rect.w,rect.h,rect.title);
+       
+      }
+
+   function mouseMove2(e){
+      mouseX2= e.pageX - this.offsetLeft;
+      mouseY2 = e.pageY - this.offsetTop;
+
+       if(dragTL2){
+        button.w2 += button.startX2-mouseX2;
+        button.h2 += button.startY2-mouseY2;
+        button.startX2 = mouseX2;
+        button.startY2 = mouseY2;
+      } else if(dragTR2) {
+        button.w2 = Math.abs(button.startX2-mouseX2);
+        button.h2 += button.startY2-mouseY2;
+        button.startY2 = mouseY2;
+      } else if(dragBL2) {
+        button.w2 += button.startX2-mouseX2;
+        button.h2 = Math.abs(button.startY2-mouseY2);
+        button.startX2 = mouseX2;  
+      } else if(dragBR2) {
+        button.w2 = Math.abs(button.startX2-mouseX2);
+        button.h2 = Math.abs(button.startY2-mouseY2);
+      }
+        drawAll();
+       //  context.clearRect(0,0,canvas.width,canvas.height);
+       //  //context.clearRect(button.startX2, button.startY2, button.w2, button.h2)
+       // create_button(button.ID,button.startX2, button.startY2,button.w2,button.h2,button.title);
+         
+
+    }
+
+    function drawAll() {
+      context.clearRect(0,0,canvas.width,canvas.height)// 캔버스 지우기
+      for (shape of shapes) {
+        if (shape.ID == "window"){
+          create_window(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title);}
+        else if (shape.ID=="button"){
+          create_button(shape.ID,shape.startX2,shape.startY2,shape.w2,shape.h2,shape.title)
+        }
+      } 
+    }
+
+    function click(e) {
+      create();
+      drawAll();
+
+        // shape 그리기
+    }
+
+
+
+    
+
+     document.getElementById("window_btn").addEventListener('click',click,false);
+     
+     
+
+     /*if(dragTL || dragTR || dragBR || dragBL == true){
+      
+      create_button(button.ID,button.startX2,button.startY2,button.w2,button.h2,title);
+
+     }
+     else if(dragTL2 || dragTR2 || dragBR2 || dragBL2 == true){
+      create_window(rect.ID,rect.startX,rect.startY,rect.w,rect.h,title);
+     }
+     else{
+
+     }*/
+
+     init();
+     init2();
+
+   
+    
+
+
+</script>
+</html>
