@@ -242,7 +242,7 @@ function menuClick(e){
   mouseY = e.pageY - this.offsetTop;
 
   for(shape of shape_list){
-    if(shape.ID="menu"){
+    if(shape.ID=="menu"){
 
       if( checkCloseEnough(mouseX, shape.startX + shape.w/2) && checkCloseEnough(mouseY, shape.startY +shape.h/2) ){
         if(shape.click)
@@ -370,12 +370,7 @@ function mouseDown2(e){
     dragTL = dragTR = dragBL = dragBR = false;
   }
 
-  function menumove(shape){
-    if(shape.click){
-
-    }
-
-}
+ 
 
   function mouseMove(e) {
     mouseX = e.pageX - this.offsetLeft;
@@ -456,6 +451,7 @@ function drawAll() {
       else{
         create_menu(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
       }
+
       
     }
   } 
@@ -474,9 +470,7 @@ function click(e) {
 
 document.getElementById("window_btn").addEventListener('click',click,false);
      
-     
-
-     init();
+init();
     
    
     
