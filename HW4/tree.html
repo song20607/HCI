@@ -9,22 +9,9 @@
   
   You can remove things by double clicking it. 
   <div id = "window" class="Window">
-<select id = "dropdown">
-  <option value="window">window</option>
-  <option value="textbox">textbox</option>
-  <option value="menu">menu</option>
-  <option value="button">button</option>  
-</select>
+<canvas id="canvas" height="1000" width="2000">window</canvas>
 </div>
 <div>
-<input type="textbox" id="Position_x" class="window" placeholder="Position_x">
-<input type="textbox" id="Position_y" class="window" placeholder="Position_y"> 
-<input type="textbox" id="width" class="window" placeholder="Width">
-<input type="textbox" id="height" class="window" placeholder="Height">
-<input type="textbox" id="title" class="window" placeholder="Title"> 
-<button id = "make_btn" class="window" > make </button>
-<canvas id="canvas" height="1000" width="1000">window</canvas>
-
 
 </div>
  </body>
@@ -35,7 +22,9 @@
 
 var tree = {};
     startX =10;
-    start Y= 10;
+    startY=10;
+    
+
 function Queue() {
 this.dataStore = []
 this.enqueue = function enqueue(element) {
@@ -52,15 +41,18 @@ return this.dataStore[this.dataStore.length - 1]
 }}
 
 
-function Node(data, ID) {
-    this.shape = create(); 
+function Node(ID, data) {
+    this.startX = 50;
+    this.startY = 50;
+    this.height = 0;
+    this.ID = ID;
     this.data = data;
     this.parent = null;
     this.children = [];
 }
  
-function Tree(data) {
-    var node = new Node(data);
+function Tree(ID, data) {
+    var node = new Node(ID, data);
     this._root = node;
 }
  
@@ -103,8 +95,8 @@ Tree.prototype.contains = function(callback, traversal) {
     traversal.call(this, callback);
 };
  
-Tree.prototype.add = function(data, toData, traversal) {
-    var child = new Node(data),
+Tree.prototype.add = function(ID, data, toData, traversal) {
+    var child = new Node(ID, data),
         parent = null,
         callback = function(node) {
             if (node.data === toData) {
@@ -117,6 +109,10 @@ Tree.prototype.add = function(data, toData, traversal) {
     if (parent) {
         parent.children.push(child);
         child.parent = parent;
+        child.height = parent.height + 1 ;
+        child.startY = parent.startY + parent.children.indexOf(child)*100;
+        child.startX = parent.startX + child.height*150;
+
     } else {
         throw new Error('Cannot add node to a non-existent parent.');
     }
@@ -168,33 +164,37 @@ function findIndex(arr, data) {
   selected_shape = {},
       mouseX, 
       mouseY,
-      closeEnough = 30,
+      closeEnough = 20,
       dragTL=dragBL=dragTR=dragBR=false,
       menu_click=false,  
 
       shape_list = [];
 
 
-  function create_window(ID,startX,startY,w,h,title) {
+  function create_window(node) {
 
     var win = {};
-    win.ID =ID;
-    win.startX =startX;
-    win.startY =startY;
-    win.w=w;
-    win.h=h;
-    win.title=title;
+    win.ID =node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY ;
+    win.title=node.data;
 
     context.beginPath(); //start drawing line
     context.font="15px Verdana";
 
-    context.rect(startX,startY,w,30);
-    context.fillRect(startX, startY+30, w, h-30);
-    context.fillText(title,startX+60,startY+20,100);
-    context.rect(startX+30,startY+5,20,20) ;
-    context.rect(startX+5,startY+5,20,20);
-    context.fillText("X",startX+35,startY+20,100); 
-    context.fillText("ㅡ",startX+8,startY+20,100);
+    if(node.parent){
+      context.moveTo(node.parent.startX+100,node.parent.startY+50);
+      context.lineTo(node.startX,node.startY)
+    }
+    context.rect(node.startX,node.startY,100,30);
+    context.fillRect(node.startX, node.startY+30, 100, 50);
+    context.fillText(node.data,node.startX+60,node.startY+20,100);
+    context.rect(node.startX+30,node.startY+5,20,20) ;
+    context.rect(node.startX+5,node.startY+5,20,20);
+    context.fillText("X",node.startX+35,node.startY+20,100); 
+    context.fillText("ㅡ",node.startX+8,node.startY+20,100);
+
+    
 
      
     context.stroke(); //drawing
@@ -206,23 +206,25 @@ function findIndex(arr, data) {
 
   }
 
-  function create_button(ID, startX,startY,w,h,title) {
+  function create_button(node) {
 
     var win = {};
-    win.ID = ID;
-    win.startX =startX;
-    win.startY =startY,
-    win.w=w;
-    win.h=h;
-    win.title=title;
+    win.ID = node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY,
+    win.title=node.data;
 
     context.beginPath(); //start drawing line
     context.font="20px Verdana";
-
+    if(node.parent){
+      context.moveTo(node.parent.startX,node.parent.startY);
+      context.lineTo(node.startX,node.startY)
+    }
     context.fillStyle= "green";
-    context.fillRect(startX, startY, w, h);
+    context.fillRect(node.startX, node.startY, 50, 50);
     context.fillStyle ="black"
-    context.fillText(title,startX+(w/2),startY+h/2,100);
+    
+    context.fillText(node.data,node.startX+10,node.startY+10,100);
     
      
     context.stroke(); //drawing
@@ -231,21 +233,23 @@ function findIndex(arr, data) {
     return win;
   }
 
-  function create_textbox(ID, startX,startY,w,h,title) {
+  function create_textbox(node) {
 
     var win = {};
-    win.ID = ID;
-    win.startX =startX;
-    win.startY =startY,
-    win.w=w;
-    win.h=h;
-    win.title=title;
+    win.ID = node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY,
+    win.title=node.data;
 
     context.beginPath(); //start drawing line
     context.font="20px Verdana";
-
-    context.rect(startX, startY, w, h);
-    context.fillText(title,startX,startY+h/2,100);
+   if(node.parent){
+        context.moveTo(node.parent.startX,node.parent.startY);
+        context.lineTo(node.startX,node.startY)
+      }
+    
+    context.rect(node.startX, node.startY, 100, 50);
+    context.fillText(node.data,node.startX,node.startY+20,100);
     
      
     context.stroke(); //drawing
@@ -254,23 +258,25 @@ function findIndex(arr, data) {
     return win;
   }
 
-  function create_menu(ID, startX,startY,w,h,title) {
+  function create_menu(node) {
 
     var win = {};
-    win.ID = ID;
-    win.startX =startX;
-    win.startY =startY,
-    win.w=w;
-    win.h=h;
-    win.title=title,
+    win.ID = node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY,
+    win.title=node.data,
     win.click = false,
     win.item=["item1","item2","item3"];
 
     context.beginPath(); //start drawing line
     context.font="20px Verdana";
 
-    context.rect(startX, startY, w, h);
-    context.fillText(title,startX,startY+h/2,100);
+    context.rect(node.startX, node.startY, 100, 50);
+    context.fillText(node.title,node.startX,node.startY+20,100);
+     if(node.parent){
+      context.moveTo(node.parent.startX,node.parent.startY);
+      context.lineTo(node.startX,node.startY)
+    }
     
      
     context.stroke(); //drawing
@@ -284,21 +290,107 @@ function findIndex(arr, data) {
     context.beginPath(); //start drawing line
     context.font="15px Verdana";
 
-    context.rect(shape.startX+5, shape.startY+shape.h, shape.w, shape.h);
-    context.fillText("item1",shape.startX+10,shape.startY+2*shape.h,100);
-    context.rect(shape.startX+5, shape.startY+2*shape.h, shape.w, shape.h);
-    context.fillText("item2",shape.startX+10,shape.startY+3*shape.h,100)
-    context.rect(shape.startX+5, shape.startY+3*shape.h, shape.w, shape.h);
-    context.fillText("item3",shape.startX+10,shape.startY+4*shape.h,100)
+    context.rect(shape.startX+5, shape.startY+50, 100, 50);
+    context.fillText("item1",shape.startX+10,shape.startY+100,100);
+    context.rect(shape.startX+5, shape.startY+100, 100, 50);
+    context.fillText("item2",shape.startX+10,shape.startY+150,100)
+    context.rect(shape.startX+5, shape.startY+15, 100, 50);
+    context.fillText("item3",shape.startX+10,shape.startY+200,100)
     
      
     context.stroke(); //drawing
     context.closePath();//match end of the line with the start point
 
   }
+  function create(node){
+    if (node.ID == "window"){
+      create_window(node)
+    }
+    else if(node.ID == "textbox"){
+      create_textbox(node)
+    }
+    else if(node.ID=="button"){
+      create_button(node)
+    }
+    else{
+      create_menu(node)
+    }
+  }
 
+  function draw(node){
+    if (node.children){
+      for (child of node.children){
+        draw(child)
+      }
+    }
+
+      create(node)
+      console.log(node)
+  }
+
+  
+
+/*function drawAll() {
+  context.clearRect(0,0,canvas.width,canvas.height)// 캔버스 지우기
+  for (shape of shape_list) {
+    if (shape.ID == "window"){
+      create_window(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title);}
+    else if (shape.ID=="button"){
+      create_button(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
+    }
+    else if (shape.ID=="textbox"){
+      create_textbox(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
+    }
+    else if (shape.ID=="menu"){
+      if(shape.click){
+        create_menu(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
+        create_submenu(shape)
+      }
+      else{
+        create_menu(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
+      }
+
+      
+    }
+  } 
+}
+
+
+
+function click(e) {
+  create();
+  drawAll();
+
+    // shape 그리기
+}*/
+
+
+
+//document.getElementById("make_btn").addEventListener('click',click,false);
+//document.getElementById("canvas").addEventListener("dblclick",remove,false)
+
+     
+//init();
+    
+  
+
+
+tree = new Tree("window",'1');
  
-  function create(){
+tree.add("button",'2', '1', tree.traverseBF);
+tree.add("window",'3', '1', tree.traverseBF);
+tree.add("textbox",'4', '1', tree.traverseBF);
+ 
+tree.add("button",'5', '2', tree.traverseBF);
+tree.add("button",'6', '2', tree.traverseBF);
+tree.add("textbox",'7', '6', tree.traverseBF);
+tree.add("textbox",'8', '6', tree.traverseBF);
+
+draw(tree._root)
+  ;
+ 
+  /*function create(){
+    
     if(document.getElementById("dropdown").value == "window")
     {
         selected_shape = create_window(
@@ -503,62 +595,10 @@ function remove(){
         }
       }
           
-    }
+    }*/
   
 
 
-function drawAll() {
-  context.clearRect(0,0,canvas.width,canvas.height)// 캔버스 지우기
-  for (shape of shape_list) {
-    if (shape.ID == "window"){
-      create_window(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title);}
-    else if (shape.ID=="button"){
-      create_button(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
-    }
-    else if (shape.ID=="textbox"){
-      create_textbox(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
-    }
-    else if (shape.ID=="menu"){
-      if(shape.click){
-        create_menu(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
-        create_submenu(shape)
-      }
-      else{
-        create_menu(shape.ID,shape.startX,shape.startY,shape.w,shape.h,shape.title)
-      }
 
-      
-    }
-  } 
-}
-
-
-
-function click(e) {
-  create();
-  drawAll();
-
-    // shape 그리기
-}
-
-
-
-document.getElementById("make_btn").addEventListener('click',click,false);
-document.getElementById("canvas").addEventListener("dblclick",remove,false)
-
-     
-init();
-    
-  
-
-
-tree = new Tree('CEO');
- 
-tree.add('VP of Happiness', 'CEO', tree.traverseBF);
-tree.add('VP of Finance', 'CEO', tree.traverseBF);
-tree.add('VP of Sadness', 'CEO', tree.traverseBF);
- 
-tree.add('Director of Puppies', 'VP of Finance', tree.traverseBF);
-tree.add('Manager of Puppies', 'Director of Puppies', tree.traverseBF);
 
 </script>
