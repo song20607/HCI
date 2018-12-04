@@ -1,0 +1,431 @@
+<!doctype html>
+<html>
+<head>
+  <title>HW4</title>
+  <meta charset="utf-8">
+</head>
+<body>
+  <h1><a href="https://song20607.github.io/HCI/">Home</a></h1>
+  
+  
+  <div id = "window" class="Window">
+<canvas id="canvas" height="1000" width="2000">window</canvas>
+</div>
+<div>
+
+</div>
+ </body>
+
+
+
+<script type="text/javascript">
+
+var tree = {};
+    startX =10;
+    startY=10;
+    
+
+function Queue() {
+  this.dataStore = []
+  this.enqueue = function enqueue(element) {
+  this.dataStore.push(element)
+  }
+  this.dequeue = function dequeue() {
+  return this.dataStore.shift()
+  }
+  this.front = function front() {
+  return this.dataStore[0]
+  }
+  this.back = function back() {
+  return this.dataStore[this.dataStore.length - 1]
+  }}
+
+
+function Node(ID, data, x, y, w, h ) {
+    this.startX = x;
+    this.startY = y;
+    this.height = h;
+    this.width =w ;
+    this.depth=0;
+    this.ID = ID;
+    this.data = data;
+    this.parent = null;
+    this.children = [];
+}
+ 
+function Tree(ID, data,x,y,w,h) {
+    var node = new Node(ID, data,x,y,w,h);
+    this._root = node;
+
+}
+ 
+Tree.prototype.traverseDF = function(callback) {
+ 
+    // this is a recurse and immediately-invoking function
+    (function recurse(currentNode) {
+        // step 2
+        for (var i = 0, length = currentNode.children.length; i < length; i++) {
+            // step 3
+            recurse(currentNode.children[i]);
+        }
+ 
+        // step 4
+        callback(currentNode);
+ 
+        // step 1
+    })(this._root);
+ 
+};
+ 
+Tree.prototype.traverseBF = function(callback) {
+    var queue = new Queue();
+ 
+    queue.enqueue(this._root);
+ 
+    currentTree = queue.dequeue();
+ 
+    while(currentTree){
+        for (var i = 0, length = currentTree.children.length; i < length; i++) {
+            queue.enqueue(currentTree.children[i]);
+        }
+ 
+        callback(currentTree);
+        currentTree = queue.dequeue();
+    }
+};
+ 
+Tree.prototype.contains = function(callback, traversal) {
+    traversal.call(this, callback);
+};
+ 
+Tree.prototype.add = function(ID, data, toData, x,y,w,h,traversal) {
+    var child = new Node(ID, data,x,y,w,h),
+        parent = null,
+        callback = function(node) {
+            if (node.data === toData) {
+                parent = node;
+            }
+        };
+ 
+    this.contains(callback, traversal);
+ 
+    if (parent) {
+        parent.children.push(child);
+        child.depth = parent.depth + 1;
+        child.parent = parent;
+      
+
+    } else {
+        throw new Error('Cannot add node to a non-existent parent.');
+    }
+};
+ 
+Tree.prototype.remove = function(data, fromData, traversal) {
+    var tree = this,
+        parent = null,
+        childToRemove = null,
+        index;
+ 
+    var callback = function(node) {
+        if (node.data === fromData) {
+            parent = node;
+        }
+    };
+ 
+    this.contains(callback, traversal);
+ 
+    if (parent) {
+        index = findIndex(parent.children, data);
+ 
+        if (index === undefined) {
+            throw new Error('Node to remove does not exist.');
+        } else {
+            childToRemove = parent.children.splice(index, 1);
+        }
+    } else {
+        throw new Error('Parent does not exist.');
+    }
+ 
+    return childToRemove;
+};
+ 
+function findIndex(arr, data) {
+    var index;
+ 
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i].data === data) {
+            index = i;
+        }
+    }
+ 
+    return index;
+}
+
+  var canvas = document.getElementById('canvas');
+  var context = canvas.getContext('2d'),
+  selected_shape = {},
+      mouseX, 
+      mouseY,
+      closeEnough = 20,
+      dragTL=dragBL=dragTR=dragBR=false,
+      menu_click=false,  
+
+      shape_list = [];
+
+
+  function create_window(node) {
+
+    var win = {};
+    win.ID =node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY ;
+    win.title=node.data;
+
+    context.beginPath(); //start drawing line
+    context.font="15px Verdana";
+
+  
+    context.fillRect(node.startX,node.startY,node.width,30);
+    context.clearRect(node.startX+1,node.startY+1,node.width-2,28)
+    context.fillRect(node.startX, node.startY+30, node.width, node.height);
+     context.clearRect(node.startX+1, node.startY+31, node.width-2, node.height-2);
+    
+    context.fillText(node.data,node.startX+60,node.startY+20,100);
+    context.rect(node.startX+30,node.startY+5,20,20) ;
+    context.rect(node.startX+5,node.startY+5,20,20);
+    context.fillText("ㅡ",node.startX+33,node.startY+20,100); 
+    context.fillText("X",node.startX+10,node.startY+20,100);
+    
+    context.stroke(); //drawing
+    context.closePath();//match end of the line with the start 
+
+
+  return win;
+
+
+  }
+
+  function create_button(node) {
+
+    var win = {};
+    win.ID = node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY,
+    win.title=node.data;
+
+    context.beginPath(); //start drawing line
+    context.font="12px Verdana";
+    
+    context.fillStyle= "green";
+    context.fillRect(node.startX, node.startY, node.width, node.height);
+    context.fillStyle ="black"
+    
+    context.fillText(node.data,node.startX+10,node.startY+10,100);
+    
+     
+    context.stroke(); //drawing
+    context.closePath();//match end of the line with the start point
+
+    return win;
+  }
+
+  function create_textbox(node) {
+
+    var win = {};
+    win.ID = node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY,
+    win.title=node.data;
+
+    context.beginPath(); //start drawing line
+    context.font="20px Verdana";
+   
+    context.fillRect(node.startX, node.startY, node.width, node.height);
+    context.clearRect(node.startX+1, node.startY+1, node.width-2, node.height-2);
+    context.fillText(node.data,node.startX,node.startY+20,100);
+    
+     
+    context.stroke(); //drawing
+    context.closePath();//match end of the line with the start point
+
+    return win;
+  }
+
+  function create_menu(node) {
+
+    var win = {};
+    win.ID = node.ID;
+    win.startX =node.startX;
+    win.startY =node.startY,
+    win.title=node.data,
+    win.click = false,
+    win.item=["item1","item2","item3"];
+
+    context.beginPath(); //start drawing line
+    context.font="20px Verdana";
+
+    context.fillRect(node.startX, node.startY, node.width, node.height);
+    context.clearRect(node.startX+1, node.startY+1, node.width-2, node.height-2);
+    context.fillText(node.title,node.startX,node.startY+20,100);
+     
+    context.stroke(); //drawing
+    context.closePath();//match end of the line with the start point
+
+    return win;
+  }
+
+  function create_submenu(shape){
+
+    context.beginPath(); //start drawing line
+    context.font="15px Verdana";
+
+    context.rect(shape.startX+5, shape.startY+50, node.width, node.height);
+    context.fillText("item1",shape.startX+10,shape.startY+100,100);
+    context.rect(shape.startX+5, shape.startY+100, node.width, node.height);
+    context.fillText("item2",shape.startX+10,shape.startY+150,100)
+    context.rect(shape.startX+5, shape.startY+15, node.width, node.height);
+    context.fillText("item3",shape.startX+10,shape.startY+200,100)
+    
+     
+    context.stroke(); //drawing
+    context.closePath();//match end of the line with the start point
+
+  }
+  function create(node){
+    if (node.ID == "window"){
+      create_window(node)
+    }
+    else if(node.ID == "textbox"){
+      create_textbox(node)
+    }
+    else if(node.ID=="button"){
+      create_button(node)
+    }
+    else{
+      create_menu(node)
+    }
+  }
+
+  function draw(node){
+      create(node)
+    if (node.children){
+      for (child of node.children){
+        draw(child)
+      }
+    }
+
+  }
+
+ 
+ function isClicked(node){
+   if(node.startX< mouseX && (node.startX+node.width) > mouseX && node.startY <mouseY && (node.startY+node.height) > mouseY){
+      return true;}
+
+ }
+
+  function check_node(evt, node){
+
+    //var pointed_node = []
+    //var pointed_node_depth = []
+    var rect = canvas.getBoundingClientRect()
+    var childReLi = []
+    mouseX = evt.clientX - rect.left;
+    mouseY = evt.clientY - rect.top;
+
+    console.log(mouseX)
+    console.log(mouseY)
+
+    if(!isClicked(node)){
+
+      return null;
+    }
+    else{
+      if(node.children.length == 0){
+        return node;
+      }
+
+      for (i = node.children.length-1; i >= 0 ; i --){
+        if(isClicked(node.children[i])){
+
+            var child_result = check_node(evt, node.children[i]);
+            console.log(node.children[i])
+            if (child_result == null){
+              continue;
+            }
+            else{
+            return child_result;
+          }
+        }
+      }
+      return node;
+
+    
+    }
+
+          return null;
+  
+}
+   
+
+   /* if(){
+      pointed_node.push(tree._root);
+      pointed_node_depth.push(tree._root.depth);
+    
+    }
+    else{
+      throw new Error("out of window")
+    }
+
+    for(child of tree._root.children){
+      if(child.startX < mouseX && child.startX+child.width > mouseX && child.startY <mouseY && child.startY+child.height > mouseY) {
+        pointed_node.push(child);
+        pointed_node_depth.push(child.depth);
+    
+      }
+    }
+    console.log(pointed_node)
+
+    return pointed_node[pointed_node.indexOf(Math.max(...pointed_node_depth))]*/
+
+
+
+function writeMessage(canvas, message) {
+    context.font = '18pt Calibri';
+    context.fillStyle = 'black';
+    context.clearRect(580,580,canvas.width,20)
+    context.fillText(message, 600, 600);
+}
+
+
+
+
+canvas.addEventListener('click', function(evt) {
+    var checknode = check_node(evt, tree._root);
+    var selected = checknode.data
+    //console.log(checknode);
+    var message = 'Node: ' + selected+ ' is selceted';
+    writeMessage(canvas, message);
+}, false);
+
+
+  
+
+
+tree = new Tree("window",'Base_window',10,10,800,500);
+console.log(tree)
+
+tree.add("textbox","Contents","Base_window",50,110,700,200,tree.traverseBF);
+tree.add("button","save","Base_window",50,60,50,20,tree.traverseBF);
+tree.add("button","print","Base_window",110,60,50,20,tree.traverseBF);
+tree.add("button","share","Base_window",170,60,50,20,tree.traverseBF)
+
+tree.add("window","Log_in","Base_window",200,150,200,200,tree.traverseBF);
+tree.add("textbox","ID","Log_in",220,200,150,30,tree.traverseBF);
+tree.add("textbox","Password","Log_in",220,250,150,30,tree.traverseBF);
+tree.add("button","OK","Log_in",220,300,100,30,tree.traverseBF);
+
+draw(tree._root)
+  ;
+  
+
+</script>
